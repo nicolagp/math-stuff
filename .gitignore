@@ -1,0 +1,11 @@
+# compiled objects
+*.o
+
+# jupyter checkpoints
+.ipynb_checkpoints
+
+# image folder
+images
+
+# generated csvs
+*.csv

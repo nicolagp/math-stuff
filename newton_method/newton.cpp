@@ -5,6 +5,8 @@
 #include <vector>
 #include "math.h"
 
+#define PI 3.14159265
+
 std::complex<double> f(std::complex<double>);
 std::complex<double> f_prime(std::complex<double>);
 std::complex<double> newton(std::complex<double>);
@@ -24,7 +26,7 @@ std::vector<double> linspace(double start, double end, double len) {
 
 int find_roots(std::vector<std::complex<double>> roots,
 std::complex<double> z) {
-    double epsilon = 1.48e-08;
+    double epsilon = 1.48e-04;
 
     for (unsigned int i=0; i<roots.size(); i++) {
         std::complex<double> root = roots[i];
@@ -37,40 +39,56 @@ std::complex<double> z) {
     return -1;
 }
 
-std::complex<double> f(std::complex<double> z) {
+std::complex<double> f1(std::complex<double> z) {
     return std::pow(z, 4) - 1.0;
 }
 
-std::complex<double> f_prime(std::complex<double> z) {
+std::complex<double> f1_prime(std::complex<double> z) {
     return 4.0 * std::pow(z,3);
 }
 
+std::complex<double> f2(std::complex<double> z) {
+    return std::sin(z);
+}
+
+std::complex<double> f2_prime(std::complex<double> z) {
+    return std::cos(z);
+}
+
+std::complex<double> f3(std::complex<double> z) {
+    return std::tan(z);
+}
+
+std::complex<double> f3_prime(std::complex<double> z) {
+    return 1.0 / std::pow(std::cos(z), 2);
+}
+
 std::complex<double> newton(std::complex<double> z0) {
-    double epsilon = 1.48e-08;
+    double epsilon = 1.48e-06;
     std::complex<double> z_new = z0;
     int iters = 0;
     int maxiter = 50;
-    bool success = false;
+    // bool success = false;
 
     for (int i=0; i<maxiter; i++) {
         // check f_prime not zero
         // if (std::abs(f_prime(z_new)) == 0) {
-        //     throw "Division by zero";
+        //     return std::complex<double>(std::nan(""), std::nan(""));
         // }
 
         // update z
-        z_new = z_new - (f(z_new) / f_prime(z_new));
+        z_new = z_new - (f3(z_new) / f3_prime(z_new));
         iters++;
     
         // test for convergence
         if (std::abs(z_new) < epsilon) {
-            success = true;
+            // success = true;
             break;
         }
     }
 
     // if (!success) {
-    //    throw "Didn't converge";
+    //    return std::complex<double>(std::nan(""), std::nan(""));
     // }
 
     return z_new;
@@ -78,33 +96,51 @@ std::complex<double> newton(std::complex<double> z0) {
 
 
 
-int main() {
+int main(int argc, char* argv[]) {
+    /* Arguments:
+    int n: dimension of points to calculate
+    string filepath: where to save image
+    */
+
+    // parse arguments
+    int n;
+    char* path;
+
+    if (argc != 3) {
+        std::cerr << "Wrong number of arguments." << std::endl;
+        std::cerr << "Usage: ./newton n filepath" << std::endl;
+    }
+    else {
+        n = std::atoi(argv[1]);
+        path = argv[2];
+        std::cout << "Arguments: " << n << ", " << path << std::endl;
+        return 0;
+    }
+
     // number of points
-    int n = 1000;
-    std::vector<double> lin = linspace(-2, 2 , n);
-    int img[n][n];
+    std::vector<double> re = linspace((3.14/2)-0.2, (3.14/2)+0.2, n);
+    std::vector<double> im = linspace(-0.2, 0.2, n);
 
     // roots
-    std::vector<std::complex<double>> roots;
-    roots.push_back(std::complex<double>(1, 0));
-    roots.push_back(std::complex<double>(-1, 0));
-    roots.push_back(std::complex<double>(0, 1));
-    roots.push_back(std::complex<double>(0, -1));
+    std::vector<std::complex<double>> roots1;
+    roots1.push_back(std::complex<double>(1, 0));
+    roots1.push_back(std::complex<double>(-1, 0));
+    roots1.push_back(std::complex<double>(0, 1));
+    roots1.push_back(std::complex<double>(0, -1));
 
-    // fill img
+    std::vector<std::complex<double>> roots2;
+    roots2.push_back(std::complex<double>(0, 0));
+    roots2.push_back(std::complex<double>(PI, 0));
+
+
+    // save img
+    std::ofstream out("out.csv");
     for (int i=0; i<n; i++) {
         for (int j=0; j<n; j++) {
             std::complex<double> z = newton(
-                std::complex<double>(lin[i], lin[j]));
-            img[i][j] = find_roots(roots, z);
-        }
-    }
+                std::complex<double>(re[j], im[i]));
 
-    // save img
-    std::ofstream out("test.csv");
-    for (int i=0; i<n; i++) {
-        for (int j=0; j<n; j++) {
-            out << img[i][j] << ", ";
+            out << find_roots(roots2, z) << ", ";
         }
         out << "\n";
     }
