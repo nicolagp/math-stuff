@@ -77,7 +77,7 @@ double pixel_value(vector<complex<double>> roots,
         return nan("");
     }
 
-    return pos + ((double) p.second / 30);
+    return pos + ((double) p.second / 50);
 }
 
 /*
@@ -95,7 +95,7 @@ pair<complex<double>, int> newton(complex<double> z0) {
     complex<double> z_new = z0;
     pair<complex<double>, int> result;
     int iters = 0;
-    int maxiter = 30;
+    int maxiter = 50;
     bool converged = false;
 
     for (int i=0; i<maxiter; i++) {
