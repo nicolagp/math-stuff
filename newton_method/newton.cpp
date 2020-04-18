@@ -5,16 +5,19 @@
 #include <vector>
 #include "math.h"
 
+using namespace std;
+
 #define PI 3.14159265
 
-std::complex<double> f(std::complex<double>);
-std::complex<double> f_prime(std::complex<double>);
-std::complex<double> newton(std::complex<double>);
-std::vector<double> linspace(double, double, double);
-int find_roots(std::vector<std::complex<double>>, std::complex<double>);
+complex<double> f(complex<double>);
+complex<double> f_prime(complex<double>);
+pair<complex<double>, int> newton(complex<double>);
+vector<double> linspace(double, double, double);
+int find_roots(vector<complex<double>>, complex<double>);
+double pixel_value(vector<complex<double>>, pair<complex<double>, int>);
 
-std::vector<double> linspace(double start, double end, double len) {
-    std::vector<double> result;
+vector<double> linspace(double start, double end, double len) {
+    vector<double> result;
     double delta = (end-start)/double(len-1);
 
     for(int i=0; i<len; i++) {
@@ -24,13 +27,20 @@ std::vector<double> linspace(double start, double end, double len) {
     return result;
 }
 
-int find_roots(std::vector<std::complex<double>> roots,
-std::complex<double> z) {
+/*
+Returns the position of the given root in the list of roots. If it can't find
+the root, it returns -1.
+
+roots: list with the roots of the function.
+z: number to find position in list.
+*/
+int find_roots(vector<complex<double>> roots,
+complex<double> z) {
     double epsilon = 1.48e-04;
 
     for (unsigned int i=0; i<roots.size(); i++) {
-        std::complex<double> root = roots[i];
-        if (std::abs(z-root) < epsilon) {
+        complex<double> root = roots[i];
+        if (abs(z-root) < epsilon) {
             return i;
         }
     }
@@ -39,108 +49,119 @@ std::complex<double> z) {
     return -1;
 }
 
-std::complex<double> f1(std::complex<double> z) {
-    return std::pow(z, 4) - 1.0;
+complex<double> f(complex<double> z) {
+    return pow(z, 4) - 1.0;
 }
 
-std::complex<double> f1_prime(std::complex<double> z) {
-    return 4.0 * std::pow(z,3);
+complex<double> f_prime(complex<double> z) {
+    return 4.0 * pow(z,3);
 }
 
-std::complex<double> f2(std::complex<double> z) {
-    return std::sin(z);
+/*
+Generates pixel value from result of newton's method calculation.
+
+roots: list with the roots of the function.
+p: pait of the complex root, and iterations taken.
+*/
+double pixel_value(vector<complex<double>> roots,
+    pair<complex<double>, int> p) {
+
+    // check convergence
+    if (p.first == complex<double>(nan(""), nan(""))) {
+        return nan("");
+    }
+
+    // return position in list + shading if found root
+    double pos = (double) find_roots(roots, p.first);
+    if (pos == -1) {
+        return nan("");
+    }
+
+    return pos + ((double) p.second / 30);
 }
 
-std::complex<double> f2_prime(std::complex<double> z) {
-    return std::cos(z);
-}
+/*
+Compute newton method of f starting at z0.
+Arguments:
+- complex<double> z0: complex number to start newton method from
 
-std::complex<double> f3(std::complex<double> z) {
-    return std::tan(z);
-}
-
-std::complex<double> f3_prime(std::complex<double> z) {
-    return 1.0 / std::pow(std::cos(z), 2);
-}
-
-std::complex<double> newton(std::complex<double> z0) {
-    double epsilon = 1.48e-06;
-    std::complex<double> z_new = z0;
+Returns:
+- Pair of the complex root achieved and the number of iterations until
+convergence. In the case it doesn't converge or reaches a derivative which
+is equal to 0, it returns a pair (nan,0). 
+*/
+pair<complex<double>, int> newton(complex<double> z0) {
+    double epsilon = 1.48e-08;
+    complex<double> z_new = z0;
+    pair<complex<double>, int> result;
     int iters = 0;
-    int maxiter = 50;
-    // bool success = false;
+    int maxiter = 30;
+    bool converged = false;
 
     for (int i=0; i<maxiter; i++) {
         // check f_prime not zero
-        // if (std::abs(f_prime(z_new)) == 0) {
-        //     return std::complex<double>(std::nan(""), std::nan(""));
-        // }
+        if (abs(f_prime(z_new)) == 0) {
+            break;
+        }
 
-        // update z
-        z_new = z_new - (f3(z_new) / f3_prime(z_new));
+        // update z and iteration
+        z_new = z_new - (f(z_new) / f_prime(z_new));
         iters++;
     
         // test for convergence
-        if (std::abs(z_new) < epsilon) {
-            // success = true;
+        if (abs(f(z_new)) < epsilon) {
+            converged = true;
+            result.first = z_new;
+            result.second = iters;
             break;
         }
     }
 
-    // if (!success) {
-    //    return std::complex<double>(std::nan(""), std::nan(""));
-    // }
+    if (!converged) {
+        result.first = complex<double>(nan(""), nan(""));
+        result.second = 0;
+    }
 
-    return z_new;
+    return result;
 }
 
 
-
+/* 
+Arguments:
+int n: dimension of points to calculate
+*/
 int main(int argc, char* argv[]) {
-    /* Arguments:
-    int n: dimension of points to calculate
-    string filepath: where to save image
-    */
-
     // parse arguments
     int n;
-    char* path;
 
-    if (argc != 3) {
-        std::cerr << "Wrong number of arguments." << std::endl;
-        std::cerr << "Usage: ./newton n filepath" << std::endl;
+    if (argc != 2) {
+        cerr << "Wrong number of arguments." << endl;
+        cerr << "Usage: ./newton n" << endl;
+        return 1;
     }
     else {
-        n = std::atoi(argv[1]);
-        path = argv[2];
-        std::cout << "Arguments: " << n << ", " << path << std::endl;
-        return 0;
+        n = atoi(argv[1]);
     }
 
     // number of points
-    std::vector<double> re = linspace((3.14/2)-0.2, (3.14/2)+0.2, n);
-    std::vector<double> im = linspace(-0.2, 0.2, n);
+    vector<double> re = linspace(-2, 2, n);
+    vector<double> im = linspace(-2, 2, n);
 
     // roots
-    std::vector<std::complex<double>> roots1;
-    roots1.push_back(std::complex<double>(1, 0));
-    roots1.push_back(std::complex<double>(-1, 0));
-    roots1.push_back(std::complex<double>(0, 1));
-    roots1.push_back(std::complex<double>(0, -1));
-
-    std::vector<std::complex<double>> roots2;
-    roots2.push_back(std::complex<double>(0, 0));
-    roots2.push_back(std::complex<double>(PI, 0));
-
+    vector<complex<double>> roots;
+    roots.push_back(complex<double>(1, 0));
+    roots.push_back(complex<double>(-1, 0));
+    roots.push_back(complex<double>(0, 1));
+    roots.push_back(complex<double>(0, -1));
 
     // save img
-    std::ofstream out("out.csv");
+    ofstream out("out.csv");
     for (int i=0; i<n; i++) {
         for (int j=0; j<n; j++) {
-            std::complex<double> z = newton(
-                std::complex<double>(re[j], im[i]));
+            pair<complex<double>, int> p = newton(
+                complex<double>(re[j], im[i]));
 
-            out << find_roots(roots2, z) << ", ";
+            out << pixel_value(roots, p) << ",";
         }
         out << "\n";
     }
