@@ -36,7 +36,7 @@ z: number to find position in list.
 */
 int find_roots(vector<complex<double>> roots,
 complex<double> z) {
-    double epsilon = 1.48e-04;
+    double epsilon = 1.48e-08;
 
     for (unsigned int i=0; i<roots.size(); i++) {
         complex<double> root = roots[i];
@@ -56,6 +56,13 @@ complex<double> f(complex<double> z) {
 complex<double> f_prime(complex<double> z) {
     return 4.0 * pow(z,3);
 }
+// complex<double> f(complex<double> z) {
+//     return pow(z, 3) - 1.0;
+// }
+
+// complex<double> f_prime(complex<double> z) {
+//     return 3.0 * pow(z,2);
+// }
 
 /*
 Generates pixel value from result of newton's method calculation.
@@ -153,6 +160,10 @@ int main(int argc, char* argv[]) {
     roots.push_back(complex<double>(-1, 0));
     roots.push_back(complex<double>(0, 1));
     roots.push_back(complex<double>(0, -1));
+
+    // roots.push_back(complex<double>(1, 0));
+    // roots.push_back(complex<double>(-cos(PI/3), sin(PI/3)));
+    // roots.push_back(complex<double>(-cos(PI/3), -sin(PI/3)));
 
     // save img
     ofstream out("out.csv");
