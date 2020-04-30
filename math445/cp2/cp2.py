@@ -226,6 +226,7 @@ def fs_wave():
 
 
 def main():
+	fs_heat()
 	fs_wave()
 
 if __name__ == "__main__":
